@@ -14,16 +14,21 @@
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
-    <scm>
-        <url>git@github.com/trsvax/tapestry-bootstrap</url>
-        <connection>scm:git:git://github.com/trsvax/tapestry-bootstrap.git</connection>
-        <developerConnection>scm:git:git@github.com:trsvax/tapestry-bootstrap.git</developerConnection>
-    </scm>
+	<scm>
+		<url>https://github.com/moacyr/tapestry-bootstrap</url>
+		<connection>scm:git:git@github.com:moacyr/tapestry-bootstrap.git</connection>
+		<developerConnection>scm:git:git@github.com:moacyr/tapestry-bootstrap.git</developerConnection>
+	</scm>
     <developers>
 		<developer>
 			<id>trsvax</id>
 			<name>Barry Books</name>
 			<email>bfb@trsvax.com</email>
+		</developer>
+		<developer>
+			<id>moacyrricardo</id>
+			<name>Moacyr Ricardo</name>
+			<email>moacyr.ricardo-at-gmail.com</email>
 		</developer>
 	</developers>
 	<parent>
@@ -273,9 +278,33 @@ of testing facilities designed for use with TestNG (http://testng.org/), so it's
                 </executions>
             </plugin>
         </plugins>
+		<extensions>
+			<extension>
+				<groupId>org.springframework.build</groupId>
+				<artifactId>aws-maven</artifactId>
+				<version>5.0.0.RELEASE</version>
+			</extension>
+		</extensions>
     </build>
 
-    <repositories>      
+    <repositories>   
+		<repository>
+        <id>devlab722-repo</id>
+        <url>http://nexus.devlab722.net/nexus/content/repositories/releases
+        </url>
+        <snapshots>
+            <enabled>false</enabled>
+        </snapshots>
+    </repository>
+
+    <repository>
+        <id>devlab722-snapshot-repo</id>
+        <url>http://nexus.devlab722.net/nexus/content/repositories/snapshots
+        </url>
+        <releases>
+            <enabled>false</enabled>
+        </releases>
+    </repository>
     </repositories>
 
     <pluginRepositories>
@@ -311,4 +340,16 @@ of testing facilities designed for use with TestNG (http://testng.org/), so it's
         <easymock-release-version>3.0</easymock-release-version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+	<distributionManagement>
+		<repository>
+			<id>s3-moarepo</id>
+			<name>S3 MoaRepo</name>
+			<url>s3://moarepo/release</url>
+		</repository>
+		<snapshotRepository>
+			<id>s3-moarepo-snapshot</id>
+			<name>S3 MoaRepo</name>
+			<url>s3://moarepo/snapshot</url>
+		</snapshotRepository>
+	</distributionManagement>
 </project>
