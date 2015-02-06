@@ -117,12 +117,16 @@ public class FormProvider extends AbstractFrameworkProvider implements Bootstrap
 					if ( type != null && type.equals("submit") && ! value.equals("Cancel") ) {
 						buttonContainer = element.getContainer();
 						buttonContainer.forceAttributes("class","form-actions " + this.type);
-						element.addClassName("btn btn-primary");
-					} else if ( type != null && type.equals("hidden")) {
+                        if (!hasBtnStyle(element)) {
+                            element.addClassName("btn btn-primary");
+                        }
+                    } else if ( type != null && type.equals("hidden")) {
 						//ignore
 					} else if ( value.equals("Cancel")) {
-						element.addClassName("btn");
-					} else {
+                        if (!hasBtnStyle(element)) {
+                            element.addClassName("btn");
+                        }
+                    } else {
 						String id = element.getAttribute("id");
 						String help = message(mixin, id + "-help");
 						if ( help != null ) {
@@ -145,7 +149,12 @@ public class FormProvider extends AbstractFrameworkProvider implements Bootstrap
 			}
 		}
 
-		/**
+        private boolean hasBtnStyle(Element element) {
+            String clazz = element.getAttribute("class");
+            return clazz != null && clazz.contains("btn");
+        }
+
+        /**
 		 * If the element is marked as error by Tapesty, add the CSS class "error" to the control-group DIV.
 		 *
 		 * Moves the "help-inline" error message created but the ValidationDecorator as a child of the control DIV.

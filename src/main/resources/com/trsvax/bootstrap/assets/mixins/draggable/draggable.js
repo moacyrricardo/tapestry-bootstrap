@@ -2,7 +2,9 @@
     /** Container of functions that may be invoked by the Tapestry.init() function. */
     $.extend(Tapestry.Initializer, {
     	jqDraggable: function(specs){
-    		$( specs.selector ).draggable(specs.params);   		
+            var e = $(specs.selector);
+            e.draggable(specs.params);
+            e.data("drag-context", specs.context);
         }
     });
 })(jQuery);
