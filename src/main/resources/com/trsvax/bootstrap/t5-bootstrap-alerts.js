@@ -34,7 +34,10 @@
                 $alerts.filter("DIV.t-info").each(function(){
                     makeBootstrapAlert($(this), "alert-success");
                 });
-                
+                $alerts.filter("DIV.t-success").each(function(){
+                    makeBootstrapAlert($(this), "alert-success");
+                });
+
                 var $controls = $(".t-alert-controls");
                 
                 if ($controls.length == 0) {

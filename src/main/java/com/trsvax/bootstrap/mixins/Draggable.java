@@ -11,8 +11,11 @@ import org.apache.tapestry5.annotations.SetupRender;
 import org.apache.tapestry5.corelib.components.Grid;
 import org.apache.tapestry5.dom.Element;
 import org.apache.tapestry5.dom.Visitor;
+import org.apache.tapestry5.internal.services.ArrayEventContext;
 import org.apache.tapestry5.ioc.annotations.Inject;
+import org.apache.tapestry5.ioc.services.TypeCoercer;
 import org.apache.tapestry5.json.JSONObject;
+import org.apache.tapestry5.services.ContextPathEncoder;
 import org.apache.tapestry5.services.javascript.JavaScriptSupport;
 import org.got5.tapestry5.jquery.ImportJQueryUI;
 import org.slf4j.Logger;
@@ -22,41 +25,47 @@ import org.slf4j.Logger;
 
 @MixinAfter
 public class Draggable {
-	
+
+	@Inject
+    TypeCoercer typeCoercer;
+	@Inject
+    ContextPathEncoder contextPathEncoder;
 	@Inject
 	JavaScriptSupport javaScriptSupport;
-	
+    @Parameter(defaultPrefix="literal")
+    JSONObject params;
+	@Inject
+	ComponentResources resources;
 	@Parameter
 	private String elementName;
 	@Parameter
 	private String draggableName;
-	
-	@Inject
-	ComponentResources resources;
-	
+    @Parameter
+    private Object[] context;
 	private Element element;
-	
 	private JSONObject spec;
-	
 	@Inject
 	private Logger logger;
-	
+
 	@SetupRender
 	void beginRender() {
-		JSONObject params = new JSONObject();
-		params.put("appendTo","body");
-		params.put("helper","clone");
-		
-		spec = new JSONObject();
-		spec.put("params",params);
-		//logger.info("spe1c {}",spec);
+        if (params == null) {
+            params = new JSONObject();
+        }
+        putConditionally("appendTo", "body");
+        putConditionally("helper", "original");
+        spec = new JSONObject().put("params", params);
+    }
 
-		
-	}
+    private void putConditionally(String key, Object value) {
+        if (!params.has(key)) {
+            params.put(key, value);
+        }
+    }
 
-	@AfterRender
+    @AfterRender
 	public void afterRender(MarkupWriter writer) {
-		String id = null;
+		String id;
 		if ( elementName == null ) {
 			elementName = resources.getElementName();
 			if ( elementName == null ) {
@@ -80,45 +89,47 @@ public class Draggable {
 			elementName = "tbody";
 			draggableName = "tr";
 		}
-		
+
 		element = writer.getElement();
-		
-		if ( elementName != null ) {
-			element.visit( new Visitor() {
-				
-				public void visit(Element e) {
-					if ( e.getName().equals(elementName)) {
-						element = e;
-					}
-					if ( e.getName().equals("tr"))  {
-						String c = e.getAttribute("class");
-						if ( c != null ) {
-							e.forceAttributes("id",c.split(" ")[0]);
-						}
-					}
-					
-				}
-			});
-		}
-		if ( element != null ) {
-			String currentID = element.getAttribute("id");
-			if ( currentID != null ) {
-				id = currentID;
-			} else {
-				element.forceAttributes("id",id);
-			}	
-			//element.addClassName("sortable");
-		}
-		//logger.info("spec {}",spec);
+
+        element.visit( new Visitor() {
+
+            public void visit(Element e) {
+                if ( e.getName().equals(elementName)) {
+                    element = e;
+                }
+                if ( e.getName().equals("tr"))  {
+                    String c = e.getAttribute("class");
+                    if ( c != null ) {
+                        e.forceAttributes("id",c.split(" ")[0]);
+                    }
+                }
+
+            }
+        });
+        String currentID = element.getAttribute("id");
+        if ( currentID != null ) {
+            id = currentID;
+        } else {
+            element.forceAttributes("id",id);
+        }
+        //element.addClassName("sortable");
+        //logger.info("spec {}",spec);
 		if ( ! spec.has("selector")) {
 			spec.put("selector",String.format("#%s %s",id,draggableName));
 		}
-		
-		javaScriptSupport.addInitializerCall("jqDraggable", spec);
-		
-	}
-	
-	public JSONObject getSpec() {
+        if (!spec.has("context")) {
+            ArrayEventContext aec = new ArrayEventContext(typeCoercer, defaulted(context));
+            spec.put("context", String.format("/%s", contextPathEncoder.encodeIntoPath(aec)));
+        }
+        javaScriptSupport.addInitializerCall("jqDraggable", spec);
+    }
+
+    private Object[] defaulted(Object[] context) {
+        return context == null ? new String[0] : context;
+    }
+
+    public JSONObject getSpec() {
 		return spec;
 	}
 }

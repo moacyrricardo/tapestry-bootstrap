@@ -61,8 +61,9 @@ public class PaginationProvider extends AbstractFrameworkProvider implements Boo
 		public void visit(Element element) {
 			if ( hasClass("t-data-grid-pager", element)) {
 				pop.add(element);
-				ul = element.elementBefore("ul");
-				ul.addClassName("pagination");
+				ul = element
+                        .elementBefore("div", "class", "pagination")
+                        .element("ul");
 			}
 			if ( anchor(element) ) {
 				if ( ul != null ) {

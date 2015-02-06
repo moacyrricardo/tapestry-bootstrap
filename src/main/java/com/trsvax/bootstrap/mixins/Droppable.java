@@ -11,8 +11,11 @@ import org.apache.tapestry5.annotations.Parameter;
 import org.apache.tapestry5.corelib.components.Grid;
 import org.apache.tapestry5.dom.Element;
 import org.apache.tapestry5.dom.Visitor;
+import org.apache.tapestry5.internal.services.ArrayEventContext;
 import org.apache.tapestry5.ioc.annotations.Inject;
+import org.apache.tapestry5.ioc.services.TypeCoercer;
 import org.apache.tapestry5.json.JSONObject;
+import org.apache.tapestry5.services.ContextPathEncoder;
 import org.apache.tapestry5.services.Request;
 import org.apache.tapestry5.services.javascript.JavaScriptSupport;
 import org.got5.tapestry5.jquery.ImportJQueryUI;
@@ -23,14 +26,20 @@ import org.got5.tapestry5.jquery.ImportJQueryUI;
 @MixinAfter
 public class Droppable {	
 	@Parameter
-	Object context;
+	Object[] context;
 	@Parameter(defaultPrefix="literal")
 	String event;
 	@Parameter(defaultPrefix="literal")
 	String zoneSelector;
 	@Parameter(defaultPrefix="literal")
 	JSONObject params;
-	
+	@Parameter
+	boolean disabled;
+
+    @Inject
+    TypeCoercer typeCoercer;
+    @Inject
+    ContextPathEncoder contextPathEncoder;
 	@Inject
 	JavaScriptSupport javaScriptSupport;
 	
@@ -49,23 +58,23 @@ public class Droppable {
 	
 	@BeginRender
 	void beginRender() {
-		if ( event == null ) {
+        if (disabled) {
+            return;
+        }
+        if ( event == null ) {
 			event = "drop";
 		}
 		String link = resources.getContainerResources().createEventLink(event).toAbsoluteURI();
-		if ( context != null ) {
-				resources.getContainerResources().createEventLink(event,context).toAbsoluteURI();
-		}
 		if ( params == null ) {
 			params = new JSONObject();
 		}
 		//spec.put("disabled",false);
 		//spec.put("accept", "*");
-		params.put("activeClass", "ui-state-default");
-		//spec.put("addClasses",true);
+        putConditionally("activeClass", "ui-state-default");
+        //spec.put("addClasses",true);
 		//spec.put("greedy",false);
-		params.put("hoverClass","ui-state-hover");
-		//spec.put("scope","default");
+        putConditionally("hoverClass", "ui-state-hover");
+        //spec.put("scope","default");
 		//spec.put("tolerance","intersect");
 		
 		spec = new JSONObject();
@@ -75,10 +84,23 @@ public class Droppable {
 		}
 		spec.put("params", params);
 		spec.put("BaseURL",link);
-	}
-	
+        if (!spec.has("context")) {
+            ArrayEventContext aec = new ArrayEventContext(typeCoercer, defaulted(context));
+            spec.put("context", String.format("/%s", contextPathEncoder.encodeIntoPath(aec)));
+        }
+    }
+
+    private void putConditionally(String key, Object value) {
+        if (!params.has(key)) {
+            params.put(key, value);
+        }
+    }
+
 	@AfterRender
 	public void afterRender(MarkupWriter writer) {
+        if (disabled) {
+            return;
+        }
 		String id = null;
 		if ( elementName == null ) {
 			elementName = resources.getElementName();
@@ -135,7 +157,11 @@ public class Droppable {
 		}
 		
 	}
-	
+
+    private Object[] defaulted(Object[] context) {
+        return context == null ? new String[0] : context;
+    }
+
 	public JSONObject getSpec() {
 		return spec;
 	}
